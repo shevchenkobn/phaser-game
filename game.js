@@ -164,7 +164,7 @@ function update() {
     brickEmitter.emitX = brick.x + brick.body.halfWidth;
     brickEmitter.emitY = brick.y;
     brickEmitter.explode(3000, 10);
-    if (game.rnd.integerInRange(0, 1)) {
+    if (!game.rnd.integerInRange(0, 2)) {
       createEnemy(
         brick.centerX - enemyWidth / 2,
         brick.y
@@ -305,7 +305,7 @@ function displayYouDied() {
 
   youDiedText = game.add.text(0, 0, 'YOU DIED', {
     font: textFontSizePx + 'px "Times New Roman"',
-    fill: '#ff0000',
+    fill: '#a80000',
     boundsAlignH: 'center',
     boundsAlignV: 'middle',
     align: 'center'
