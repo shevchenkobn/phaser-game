@@ -164,7 +164,7 @@ function update() {
     brickEmitter.emitX = brick.x + brick.body.halfWidth;
     brickEmitter.emitY = brick.y;
     brickEmitter.explode(3000, 10);
-    if (!game.rnd.integerInRange(0, 2)) {
+    if (!game.rnd.integerInRange(0, 1)) {
       createEnemy(
         brick.centerX - enemyWidth / 2,
         brick.y
@@ -188,6 +188,7 @@ function update() {
   }
 
   tank.body.velocity.x = 0;
+  tank.body.velocity.y = 0;
   if (cursors.left.isDown) {
     tank.body.velocity.x = -300;
   } else if (cursors.right.isDown) {
