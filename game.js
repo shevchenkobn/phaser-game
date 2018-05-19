@@ -7,7 +7,7 @@ const bulletHeight = 60;
 const enemyWidth = 45;
 const enemyAttackSpeed = 600;
 const initialLives = 3;
-const heartWidth = 36;
+const heartCoinHeight = 36;
 const textFontSizePx = 100;
 const textIncrease = 15;
 
@@ -25,6 +25,7 @@ let bulletEmitter;
 let brickEmitter;
 let shootEmitter;
 let enemyGroup;
+let enemyEmitterGroup;
 const enemyMap = new Map();
 let enemyScale;
 let enemyExplode;
@@ -33,6 +34,14 @@ let lives;
 let tankExplode;
 let youDiedText;
 let youDiedBackground;
+let pointsCoin;
+let coinScale;
+let coinEmitter;
+
+const coinFrame = {
+  width: 700 / 6,
+  height: 96
+};
 
 function preload() {
   game.load.image('background', 'assets/background.jpg');
@@ -49,6 +58,8 @@ function preload() {
   game.load.image('enemy', 'assets/invader.png');
   game.load.image('green', 'assets/green.png');
   game.load.image('heart', 'assets/heart.png');
+
+  game.load.spritesheet('coin', 'assets/coin.png', coinFrame.width, coinFrame.height);
 
   game.load.script('BlurY', 'filters/BlurY.js');
 }
@@ -126,7 +137,11 @@ function create() {
   shootEmitter.gravity = 0;
 
   // Enemy initialization
+  // enemyGroup = game.add.group();
   // game.physics.arcade.enable(enemyGroup);
+  // enemyGroup.enableBody = true;
+  // enemyEmitterGroup = game.add.group();
+  
   createEnemy(0, bricksYLimit, false);
   createEnemy(gameWidth - enemyWidth, bricksYLimit);
   for (let i = 0; i < 3; i++) {
@@ -147,14 +162,27 @@ function create() {
   // tankExplode.maxParticleScale = 0.4;
   // tankExplode.minParticleScale = 0.7;
 
-  const heartScale = heartWidth / game.cache.getImage('heart').width;
+  const heartScale = heartCoinHeight / game.cache.getImage('heart').height;
   livesGroup = game.add.group();
-  const y = gameHeight - heartScale * game.cache.getImage('heart').height;
+  const heartsY = gameHeight - heartCoinHeight;
   for (let i = 0; i < initialLives; i++) {
-    const heart = livesGroup.create(i * heartWidth, y, 'heart');
+    const heart = livesGroup.create(i * heartCoinHeight, heartsY, 'heart');
     heart.scale.setTo(heartScale, heartScale);
   }
   lives = initialLives;
+
+  coinScale = heartCoinHeight / coinFrame.height;
+  const coinWidth = coinScale * coinFrame.width;
+  pointsCoin = game.add.sprite(gameWidth - coinWidth, gameHeight - heartCoinHeight, 'coin');
+  pointsCoin.scale.setTo(coinScale, coinScale);
+  pointsCoin.animations.add('spin');
+  pointsCoin.animations.play('spin', 5, true);
+
+  coinEmitter = game.add.emitter(0, 0, 50);
+  coinEmitter.makeParticles('coin');
+  coinEmitter.gravity = 300;
+  coinEmitter.maxParticleScale = coinScale;
+  coinEmitter.minParticleScale = coinScale;
 }
 
 function update() {
@@ -172,6 +200,9 @@ function update() {
     }
   });
   for (const [enemy, emitter] of enemyMap) {
+    if (!enemy.alive) {
+      continue;
+    }
     emitter.emitX = enemy.centerX;
     emitter.emitY = enemy.centerY;
     game.physics.arcade.collide(bricks, enemy);
