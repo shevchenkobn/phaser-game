@@ -32,11 +32,12 @@ let enemyExplode;
 let livesGroup;
 let lives;
 let tankExplode;
-let youDiedText;
+let endGameText;
 let youDiedBackground;
 let pointsCoin;
 let coinScale;
-let coinEmitter;
+let score;
+let scoreText;
 
 const coinFrame = {
   width: 700 / 6,
@@ -72,6 +73,7 @@ function create() {
   // Bricks initialization
   bricks = game.add.group();
   bricks.enableBody = true;
+  bricks.z = 99;
 
   let { width: brickWidth, height: brickHeight } = game.cache.getImage('brick');
   const brickScale = gameWidth / cols / brickWidth;
@@ -143,12 +145,12 @@ function create() {
   // enemyEmitterGroup = game.add.group();
   
   createEnemy(0, bricksYLimit, false);
-  createEnemy(gameWidth - enemyWidth, bricksYLimit);
+  createEnemy(gameWidth - enemyWidth, bricksYLimit, false);
   for (let i = 0; i < 3; i++) {
     createEnemy(game.rnd.integerInRange(0, gameWidth - enemyWidth), 0, false);
   }
 
-  enemyExplode = game.add.emitter(0, 0, 100);
+  enemyExplode = game.add.emitter(0, 0, 1000);
   enemyExplode.makeParticles('red');
   enemyExplode.gravity = 600;
   enemyExplode.maxParticleScale = 0.4;
@@ -178,11 +180,14 @@ function create() {
   pointsCoin.animations.add('spin');
   pointsCoin.animations.play('spin', 5, true);
 
-  coinEmitter = game.add.emitter(0, 0, 50);
-  coinEmitter.makeParticles('coin');
-  coinEmitter.gravity = 300;
-  coinEmitter.maxParticleScale = coinScale;
-  coinEmitter.minParticleScale = coinScale;
+  score = 0;
+  scoreText = game.add.text(0, gameHeight + heartCoinHeight * 0.2, score, {
+    font: 'bold ' + heartCoinHeight + 'px Arial',
+    fill: '	#FFA500',
+    boundsAlignH: 'right',
+    boundsAlignV: 'bottom'
+  });
+  scoreText.setTextBounds(0, 0, gameWidth - coinWidth - 4, 0);
 }
 
 function update() {
@@ -192,11 +197,15 @@ function update() {
     brickEmitter.emitX = brick.x + brick.body.halfWidth;
     brickEmitter.emitY = brick.y;
     brickEmitter.explode(3000, 10);
+    score += 2;
     if (!game.rnd.integerInRange(0, 1)) {
       createEnemy(
         brick.centerX - enemyWidth / 2,
         brick.y
       );
+    }
+    if (!bricks.countLiving()) {
+      winGame();
     }
   });
   for (const [enemy, emitter] of enemyMap) {
@@ -209,6 +218,7 @@ function update() {
     game.physics.arcade.collide(enemy, bullet, (enemy, bullet) => {
       bullet.kill();
       killEnemy(enemy, emitter);
+      score++;
     });
     game.physics.arcade.collide(enemy, tank, (enemy, tank) => {
       bullet.kill();
@@ -240,6 +250,8 @@ function update() {
     bulletEmitter.emitX = bullet.x + bullet.body.halfWidth;
     bulletEmitter.emitY = bullet.y + bullet.body.halfHeight;
   }
+
+  scoreText.setText(score);
 }
 
 function createEnemy(x, y, randomVelocity = true) {
@@ -267,8 +279,8 @@ function createEnemy(x, y, randomVelocity = true) {
     enemyMap.set(enemy, emitter);
   } else {
     emitter.on = true;
-    enemy.x = x;
-    enemy.y = y;
+    enemy.body.x = x;
+    enemy.body.y = y;
     enemy.revive();
   }
 
@@ -303,6 +315,7 @@ function killEnemy(enemy, emitter) {
   (emitter || enemyMap.get(enemy)).on = false;
   enemyExplode.emitX = enemy.centerX;
   enemyExplode.emitY = enemy.y;
+  // enemy.body.x = enemy.body.y = -10;
   enemyExplode.explode(3000, 30);
 }
 
@@ -335,16 +348,37 @@ function displayYouDied() {
   }, 1500, Phaser.Easing.Linear.None, true);
   // debugger;
 
-  youDiedText = game.add.text(0, 0, 'YOU DIED', {
+  endGameText = game.add.text(0, 0, 'YOU DIED', {
     font: textFontSizePx + 'px "Times New Roman"',
     fill: '#a80000',
     boundsAlignH: 'center',
     boundsAlignV: 'middle',
     align: 'center'
   });
-  youDiedText.alpha = 0;
-  youDiedText.setTextBounds(0, 0, gameWidth, gameHeight);
-  game.add.tween(youDiedText).to({
+  endGameText.alpha = 0;
+  endGameText.setTextBounds(0, 0, gameWidth, gameHeight);
+  game.add.tween(endGameText).to({
+    alpha: 1,
+    fontSize: textFontSizePx + textIncrease
+  }, 1500, Phaser.Easing.Linear.None, true);
+}
+
+function winGame() {
+  for (const [enemy, emitter] of enemyMap) {
+    if (enemy.alive) {
+      killEnemy(enemy, emitter);
+    }
+  }
+  endGameText = game.add.text(0, 0, 'YOU WON', {
+    font: 'bold ' + textFontSizePx + 'px Arial',
+    fill: '#330099',
+    boundsAlignH: 'center',
+    boundsAlignV: 'middle',
+    align: 'center'
+  });
+  endGameText.alpha = 0;
+  endGameText.setTextBounds(0, 0, gameWidth, gameHeight);
+  game.add.tween(endGameText).to({
     alpha: 1,
     fontSize: textFontSizePx + textIncrease
   }, 1500, Phaser.Easing.Linear.None, true);
