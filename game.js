@@ -344,9 +344,8 @@ function displayYouDied() {
   game.add.tween(rectangle).to({
     alpha: 0.6,
     height: textFontSizePx + textIncrease,
-    y: -(textFontSizePx + textIncrease) / 2
+    y: -(textFontSizePx / 2 + textIncrease)
   }, 1500, Phaser.Easing.Linear.None, true);
-  // debugger;
 
   endGameText = game.add.text(0, 0, 'YOU DIED', {
     font: textFontSizePx + 'px "Times New Roman"',
